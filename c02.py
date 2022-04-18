@@ -1,5 +1,2 @@
-print("triangle")
-print("rectangle")
-print("pentagon")
-print("hexagon")
-print("heptagon")
+name = input
+print("Hello", name
