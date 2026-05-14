@@ -5,6 +5,7 @@ Watch the turtle draw a path, then recreate it from memory!
 """
 
 import random
+import time
 import turtle
 
 STEP_SIZE = 10
@@ -34,7 +35,6 @@ SHOW_TIME_MS = 1200
 
 computer_moves = []
 user_moves = []
-collecting_input = False
 
 
 screen = turtle.Screen()
@@ -91,7 +91,6 @@ def make_computer_path():
 
 def start_player_turn():
     """Clear and let the user try to redraw the path."""
-    global collecting_input
     artist.clear()
     artist.penup()
     artist.goto(0, 0)
@@ -99,10 +98,9 @@ def start_player_turn():
     artist.pendown()
 
     user_moves.clear()
-    collecting_input = True
 
     write_message(
-        "Use Up = forward 10, Left = turn left, Right = turn right, X = finish"
+        "Enter moves in pop-ups: F=forward 10, L=left, R=right, X=finish"
     )
 
 
@@ -124,49 +122,52 @@ def score_attempt():
     return matches, total, percent
 
 
-def finish_attempt():
-    global collecting_input
-    if not collecting_input:
-        return
+def collect_player_moves():
+    """Collect user commands through text input dialogs."""
+    while True:
+        entry = screen.textinput(
+            "Your Move",
+            "Type F (forward 10), L (left), R (right), or X (finish):",
+        )
 
-    collecting_input = False
-    matches, total, percent = score_attempt()
+        if entry is None:
+            return
 
-    write_message(
-        f"Score: {matches}/{total} moves matched ({percent}%). Press Space to play again."
-    )
+        command = entry.strip().upper()
 
-
-def go_forward():
-    if collecting_input:
-        artist.forward(STEP_SIZE)
-        user_moves.append(f"F{STEP_SIZE}")
-
-
-def turn_left():
-    if collecting_input:
-        artist.left(90)
-        user_moves.append("L")
-
-
-def turn_right():
-    if collecting_input:
-        artist.right(90)
-        user_moves.append("R")
+        if command == "F":
+            artist.forward(STEP_SIZE)
+            user_moves.append(f"F{STEP_SIZE}")
+        elif command == "L":
+            artist.left(90)
+            user_moves.append("L")
+        elif command == "R":
+            artist.right(90)
+            user_moves.append("R")
+        elif command == "X":
+            return
 
 
 def play_round():
     write_message("Watch the path carefully...")
     make_computer_path()
-    screen.ontimer(start_player_turn, SHOW_TIME_MS)
+    time.sleep(SHOW_TIME_MS / 1000)
+
+    start_player_turn()
+    collect_player_moves()
+
+    matches, total, percent = score_attempt()
+    write_message(f"Score: {matches}/{total} moves matched ({percent}%).")
 
 
-screen.listen()
-screen.onkey(go_forward, "Up")
-screen.onkey(turn_left, "Left")
-screen.onkey(turn_right, "Right")
-screen.onkey(finish_attempt, "x")
-screen.onkey(play_round, "space")
+def game_loop():
+    while True:
+        play_round()
+        again = screen.textinput("Play Again", "Play another round? (y/n)")
+        if again is None or again.strip().lower() != "y":
+            write_message("Thanks for playing!")
+            break
 
-play_round()
-screen.mainloop()
+
+if __name__ == "__main__":
+    game_loop()
